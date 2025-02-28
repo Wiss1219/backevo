@@ -9,13 +9,15 @@ if (!process.env.MONGODB_URI) {
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path');
 
 const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173'] }));
+
+// Update CORS to allow your frontend's production URL on Render
+// Replace 'https://your-frontend.onrender.com' with your actual frontend URL after deployment
+app.use(cors({ origin: 'https://your-frontend.onrender.com' }));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
@@ -28,21 +30,10 @@ app.use('/api/products', require('./routes/products'));
 app.use('/api/cart', require('./routes/cart'));
 app.use('/api/orders', require('./routes/orders'));
 
-// Serve static files only in production
-if (process.env.NODE_ENV === 'production') {
-  // Serve frontend static files
-  app.use(express.static(path.join(__dirname, '../frontend/client/dist')));
-  
-  // Handle React routing, return all requests to React app
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/client/dist', 'index.html'));
-  });
-} else {
-  // Handle 404 for API routes in development
-  app.use('/api/*', (req, res) => {
-    res.status(404).json({ message: 'API endpoint not found' });
-  });
-}
+// Handle 404 for API routes (no static file serving needed)
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ message: 'API endpoint not found' });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
